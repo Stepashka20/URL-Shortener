@@ -2,16 +2,13 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import {MdContentCopy,MdDelete } from 'react-icons/md'
 import {HiQrcode } from 'react-icons/hi'
-import {IoIosStats } from 'react-icons/io'
-import { useColorMode,ChakraProvider, Box, Button, Input, InputGroup, InputRightElement, Center, Text, List, ListIcon, useBreakpointValue,ListItem,Card,CardBody,Flex,Grid,IconButton } from "@chakra-ui/react"
+import { useColorMode, Box, Button, Input, InputGroup, InputRightElement, Center, Text, List, ListIcon, useBreakpointValue,ListItem,Flex,Grid,IconButton } from "@chakra-ui/react"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 import './App.css';
+import QrModal from './QrModal';
+
+import { useDisclosure } from "@chakra-ui/react"
 function App() {
-    // change theme to dark
-    // const [colorMode, setColorMode] = useColorMode()
-    // useEffect(() => {
-    //     setColorMode("dark")
-    // }, [])
     const { colorMode, toggleColorMode } = useColorMode()
     const [loading, setLoading] = useState(false)
     const [shortenedURLs, setShortenedURLs] = useState([])
@@ -25,7 +22,13 @@ function App() {
             setShortenedURLs([{ longURL: url, shortURL: "http://short.url" },...shortenedURLs])
             setUrl("")
             setLoading(false)
-        }, 100)
+        }, 1000)
+    }
+    const { isOpen, onOpen, onClose } = useDisclosure()
+    const [qrUrl,setQrUrl] = useState("")
+    const handleQrClick = (url) => {
+        setQrUrl(url)
+        onOpen()
     }
     useEffect(() => {
         if (colorMode !== "dark") toggleColorMode()
@@ -39,11 +42,12 @@ function App() {
         console.log("Save")
         window.localStorage.setItem("shortenedURLs", JSON.stringify(shortenedURLs));
     }, [shortenedURLs]); 
-    // isMobile
     const isMobile = useBreakpointValue({ base: true, md: false })
-    return (
-        // <ChakraProvider>
+    return ( 
+        <>
+        <QrModal isOpen={isOpen} url={qrUrl} onClose={onClose}/>
         <Center display="flex" flexDirection="column" alignItems="center" h={isMobile ? "calc(100vh - 60px)" : "100vh"} >
+        
             <Box w="100%" maxW="800px">
                 <Text fontSize={fontSize} fontWeight="bold" textAlign="center" mb="1rem">
                     Shorten your url
@@ -68,10 +72,10 @@ function App() {
                                 <Box flex="1"  ml="5px" overflow='hidden' textOverflow={"ellipsis"} whiteSpace="nowrap">{longURL}</Box>
                                 <Grid templateColumns="1fr auto auto auto" gap="1rem" alignItems={"center"}>
                                     <Box color="blue.300" fontWeight={"bold"}>{shortURL}</Box>
-                                    <IconButton aria-label='qrcode'  size="md" icon={<HiQrcode />} />
+                                    <IconButton aria-label='qrcode'  size="md" icon={<HiQrcode />}onClick={()=>handleQrClick(shortURL)} />
                                     {/* <IconButton aria-label='stats'  size="md" icon={<IoIosStats />} /> */}
                                     <CopyToClipboard text={shortURL}>
-                                        <IconButton aria-label='copy'  size="md" icon={<MdContentCopy />} />
+                                        <IconButton aria-label='copy' size="md" icon={<MdContentCopy />} />
                                     </CopyToClipboard>
                                     <IconButton aria-label='delete' size="md" icon={<MdDelete />} variant='outline' onClick={() => {
                                         setShortenedURLs(shortenedURLs.filter((_, i) => i !== index))
@@ -81,12 +85,13 @@ function App() {
                                 </Box>
                             </ListItem>
                             ))}
+                            
                         </List>
                     </Box>
                 )}
             </Box>
         </Center>
-        // </ChakraProvider>
+        </>
     )
 }
 
