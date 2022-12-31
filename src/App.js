@@ -2,27 +2,53 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import {MdContentCopy,MdDelete } from 'react-icons/md'
 import {HiQrcode } from 'react-icons/hi'
-import { useColorMode, Box, Button, Input, InputGroup, InputRightElement, Center, Text, List, ListIcon, useBreakpointValue,ListItem,Flex,Grid,IconButton } from "@chakra-ui/react"
+import { useColorMode, Box, Button, Input, InputGroup, InputRightElement, Center, Text, List, useToast , useBreakpointValue,ListItem,Flex,Grid,IconButton } from "@chakra-ui/react"
 import { CopyToClipboard } from "react-copy-to-clipboard"
 import './App.css';
 import QrModal from './QrModal';
 
 import { useDisclosure } from "@chakra-ui/react"
+
+const BACKEND_URL = "https://url.stepashka20.ru"
+
 function App() {
     const { colorMode, toggleColorMode } = useColorMode()
     const [loading, setLoading] = useState(false)
     const [shortenedURLs, setShortenedURLs] = useState([])
     const [url, setUrl] = useState("")
     const fontSize = useBreakpointValue({ base: "md", md: "lg" })
+    const toast = useToast();
 
-    const handleClick = () => {
+
+    const handleClick = async () => {
         if (!url) return
         setLoading(true)
-        setTimeout(() => {
-            setShortenedURLs([{ longURL: url, shortURL: "http://short.url" },...shortenedURLs])
+
+        const res = await fetch(`${BACKEND_URL}/getShortUrl`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'url='+url
+        })
+
+        const data = await res.text()
+
+        if (res.ok){
+            setShortenedURLs([{ longURL: url, shortURL: `${BACKEND_URL}/${data}` },...shortenedURLs])
             setUrl("")
             setLoading(false)
-        }, 1000)
+        } else {
+            setLoading(false)
+            toast({
+                title: 'Error',
+                description: "Something went wrong",
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+                position: "top-right"
+            })
+        }
     }
     const { isOpen, onOpen, onClose } = useDisclosure()
     const [qrUrl,setQrUrl] = useState("")
